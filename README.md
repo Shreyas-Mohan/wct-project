@@ -1,51 +1,58 @@
-# 📡 Wi-Fi Channel State Information (CSI) Sensing Project
+# 📡 Wi-Fi Channel State Information (CSI) Sensing 
+### *Next-Generation Adaptive Smart Router via Machine Learning*
 
 ## 🎯 The Ultimate Goal
-We are building a machine learning system that uses Wi-Fi Channel State Information (CSI) to understand human presence in a room. But instead of stopping at just "predicting an output," we are using those predictions to simulate an **Adaptive Wi-Fi Manager**—a smart router script that dynamically adjusts its Transmission (Tx) power and MIMO configurations based on how many people are in the room to save energy and optimize bandwidth.
+We built a machine learning system that uses passive Wi-Fi Channel State Information (CSI) to understand human presence and crowd size in a room. However, instead of stopping at a prediction, we applied this logic to a simulated **Adaptive Wi-Fi Manager**—a smart router script that dynamically cascades its processing, adjusting Transmission (Tx) power and MIMO configurations based on real-time occupancy to save energy and optimize bandwidth.
 
 ---
 
-## 🎢 The Journey, The Traps, and The Misconceptions
+## 🏗️ The "Two-Stage Cascade" Architecture
+To balance high accuracy with edge-compute power constraints (Green IoT), our router uses a dual-pipeline architecture:
 
-If you're reading this, just know we did not get here linearly. We fell into a few massive rabbit holes:
+1. **Stage 1: The "Always-On" Macro Observer (5 GHz IEEE 802.11ax)**
+   * **Goal:** Robust Binary Occupancy (Empty vs. Occupied).
+   * **How it works:** The router extracts core statistical features from standard 5 GHz Wi-Fi temporal fading. It uses a heavily regularized LightGBM model to detect presence.
+   * **Result:** **96% - 99% Leak-Proof Accuracy**. When empty, the router drops to a 10% Tx power "Sleep Mode."
 
-### ❌ Trap 1: The "Temporal Fading" Error
-We initially started with the **Multiband Wi-Fi Passive Sensing Dataset** and tried to extract temporal-fading metrics (moving variance over windows of 100 packets). 
-* **The Reality Check:** The code crashed repeatedly because the dataset files only contained 50 packets each! 
-* **The Lesson:** We confused *Temporal Sensing* (capturing the Doppler shift of a moving human over time) with *Static Spatial Sensing* (capturing the distorted physical "shape" of the Wi-Fi frequencies bouncing off static bodies). Once we shifted our math to extract the raw spatial shape of the 500 subcarriers instead of time-based variance, the whole pipeline unlocked.
-
-### ❌ Trap 2: The "Shiny New Dataset" Illusion
-Later on, we found a glorious **IEEE 802.11ax (Wi-Fi 6)** dataset. It had 996 subcarriers, 16,000+ packets per file, and actual tracking of people walking and running! Perfect for Crowd Counting, right?
-* **The Reality Check:** I read the abstract. The dataset only contained scenarios of *Empty Room* vs. *1 Person* doing activities. 
-* **The Lesson:** You cannot train an ML model to count 0 to 4 people if it has never seen 2, 3, or 4 people. Machine learning cannot magically extrapolate multipath wave intersections it hasn't seen.
-
----
-
-## 🛠️ What We've Actually Built So Far (The Beta)
-
-While working on the static 5 GHz Multiband dataset (0 to 4 people), we built a fully functioning pipeline:
-
-1. **Parser:** Engineered a custom data loader that converts chaotic MATLAB complex strings (`0.5+0.2i`) into pure Python float amplitudes.
-2. **Feature Engineering:** Extracted all 500 spatial subcarriers + **8 statistical meta-features** (Mean, Min, Max, Peak-to-Peak, Skewness, Kurtosis, etc.).
-3. **Dimensionality Reduction:** Pushed 500 subcarriers through **PCA** to keep 95% of the variance resulting in 94 core, un-correlated components.
-4. **Balancing:** Used **SMOTE** to fix the highly imbalanced dataset (which followed a binomial distribution naturally).
-5. **The Model:** Ran a Randomized Grid Search on `LightGBM` achieving a whopping **91.02% Accuracy** on multi-class prediction.
-6. **The Application:** Wrote an `Adaptive Wi-Fi Manager Simulation` that takes the model's live outputs and logs exact networking responses (e.g., *Status: Empty -> Reducing Tx Power to 20%; Status: 4 People -> Max Tx, Activating MU-MIMO*).
+2. **Stage 2: The "Sniper" Micro-Refiner (5 GHz + 60 GHz mmWave Fusion)**
+   * **Goal:** High-precision bandwidth allocation (Distinguishing exactly 1 vs. 2 users).
+   * **How it works:** If Stage 1 detects occupancy, it temporarily wakes the 60 GHz mmWave phased-array antenna. We use a **Split-Pipeline Sensor Fusion** architecture that applies PCA to compress the noisy 5 GHz subcarriers while preserving the exact spatial Line-of-Sight blockages from the 60 GHz Angle-of-Arrival (AoA) data.
+   * **Result:** **93.33% Accuracy** with a 76% reduction in computational feature load. The router perfectly switches between *Focused Beamforming* (1 person) and *Spatial Multiplexing* (2+ people).
 
 ---
 
-## 🚀 The Final "Two-Part" Plan
+## 🎢 The Journey, The Traps, and The Engineering Solutions
 
-To align with high-level networking research papers while still implementing our cool Smart Router idea, we decided to split the project into two distinct parts:
+Building a physically accurate RF machine learning model meant falling into—and engineering our way out of—massive technical traps:
 
-### Part 1: Robust Binary Occupancy Detection (The Core System)
-**Goal:** Prove high-fidelity room occupancy using state-of-the-art temporal CSI data.
-* **Dataset:** The IEEE 802.11ax (Wi-Fi 6) dataset constraint.
-* **Focus:** Extreme efficiency. Using tree-based models (LightGBM/XGBoost) to detect Human (Walking/Running) vs. Empty Space with near-perfect accuracy using temporal time-series features.
-* **Status:** *Waiting on IEEE DataPort access.* ⏳
+### ❌ Trap 1: The "Shiny New Dataset" Illusion
+* **The Trap:** We found a glorious IEEE dataset with 16,000+ packets per file, perfect for Crowd Counting!
+* **The Reality Check:** Upon reading the abstract, we discovered the dataset only contained scenarios of *Empty Room* vs. *1 Person*. 
+* **The Solution:** We split the project. We used the IEEE dataset strictly to perfect the temporal physics of Binary Occupancy and pivoted to the UC3M Multiband dataset to tackle Multi-Class Crowd Counting.
 
-### Part 2: Adaptive Router & Multi-Person Capacity (The Beta Feature)
-**Goal:** Show the real-world application layer of this math. 
-* **Dataset:** The static 5 GHz Multiband dataset (0-4 people).
-* **Focus:** Because robust temporal datasets with multiple people don't widely exist yet, this serves as a mathematical proxy/beta. We use our 91% accurate 5-class LightGBM model to trigger a simulated IoT network controller. 
-* **Status:** *100% Complete & Ready for Presentation.* ✅
+### ❌ Trap 2: Hyperparameter Data Leakage
+* **The Trap:** We decreased our sliding window step-size to 10 to generate 3x more training data. Accuracy shot up to 100%. 
+* **The Reality Check:** We introduced extreme multicollinearity (90% overlap between windows). Furthermore, our Hyperparameter Tuner was looking at the entire dataset, effectively memorizing the background hardware noise. 
+* **The Solution:** We engineered a rigorous nested cross-validation pipeline (`StratifiedGroupKFold`), locking the test files completely out of sight. We proved our final results were physically genuine by running **Permutation Tests** (shuffling labels), which caused the accuracy to rightfully collapse to ~50%.
+
+### ❌ Trap 3: The Curse of Dimensionality (PCA Physics)
+* **The Trap:** Fusing 5 GHz and 60 GHz data resulted in 569 features. We threw all 569 into PCA to compress them, but accuracy plummeted. 
+* **The Reality Check:** PCA looks for *variance*. 5 GHz bounces everywhere (high variance), but 60 GHz mmWave acts as a precise tripwire (low variance but high importance). PCA treated the critical 60 GHz blockages as "noise" and deleted them.
+* **The Solution:** The **Split-Pipeline**. We explicitly sliced the matrices, applying PCA *only* to the 500 subcarriers of the 5 GHz band (compressing them to ~63 features) and horizontally concatenated them with the raw, untouched 60 GHz AoA data. Accuracy surged to **93.33%** while maintaining edge-compute efficiency.
+
+---
+
+## 🛠️ The Tech Stack
+* **Data Processing:** `numpy`, `pandas`, `scipy.io` (MATLAB extraction)
+* **Machine Learning:** `LightGBM`, `XGBoost`, `scikit-learn` (PCA, StandardScaler, GroupKFold)
+* **Visualization:** `matplotlib`, `seaborn`
+
+## 📊 Key Results Summary
+| Task | Dataset | Algorithm | Best Accuracy | Key Feature |
+| :--- | :--- | :--- | :--- | :--- |
+| **Binary Occupancy** | IEEE 802.11ax (Temporal) | Tuned LightGBM | **99.14%** | Window Step-Size Optimization |
+| **General Crowd Sizing (0-4)** | UC3M 5 GHz (Spatial) | LightGBM + PCA | **91.02%** | Spatial PCA Fingerprinting |
+| **High-Precision Counting (1 vs 2)** | UC3M 5GHz + 60GHz Fusion | Split-Pipeline LGBM | **93.33%** | mmWave AoA Blockage Fusion |
+
+---
+*Developed for the Smart India Hackathon (SIH) 2026.*
