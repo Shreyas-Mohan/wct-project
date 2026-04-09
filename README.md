@@ -1,4 +1,4 @@
-# 📡 Wi-Fi Channel State Information (CSI) Sensing 
+ye# 📡 Wi-Fi Channel State Information (CSI) Sensing 
 ### *Next-Generation Adaptive Smart Router via Machine Learning*
 
 ## 🎯 The Ultimate Goal
@@ -55,4 +55,4 @@ Building a physically accurate RF machine learning model meant falling into—an
 | **High-Precision Counting (1 vs 2)** | UC3M 5GHz + 60GHz Fusion | Split-Pipeline LGBM | **93.33%** | mmWave AoA Blockage Fusion |
 
 ---
-*Developed for the Smart India Hackathon (SIH) 2026.*
+*Developed for the 5G Innovation Hackathon 2026.*
