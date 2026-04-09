@@ -1,0 +1,18 @@
+
+# Datasets and Large Files
+Multiband WiFi Passive sensing/
+20181109/
+20181211/
+features_processed/
+processed_files/
+Widar-dataset-classroom/
+Widar-dataset-office/
+*.csv
+*.mat
+*.pkl
+
+# Python / Jupyter Ignores
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
