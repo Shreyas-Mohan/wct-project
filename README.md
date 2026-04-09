@@ -1,4 +1,4 @@
-ye# 📡 Wi-Fi Channel State Information (CSI) Sensing 
+# 📡 Wi-Fi Channel State Information (CSI) Sensing 
 ### *Next-Generation Adaptive Smart Router via Machine Learning*
 
 ## 🎯 The Ultimate Goal
