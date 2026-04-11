@@ -17,7 +17,7 @@ class RoomCalibrator:
         # If a pre-trained global model is present, we could do Neural Network fine-tuning.
         # For this template, if none is provided, we use a lightweight ML classifier 
         # (RandomForest) to demonstrate fast edge-training on the new room data.
-        self.model = global_model if global_model else RandomForestClassifier(n_estimators=50, random_state=42)
+        self.model = global_model if global_model is not None else RandomForestClassifier(n_estimators=50, random_state=42)
         self.is_calibrated = False
 
     def calibrate_empty_room(self, empty_csi_data):
