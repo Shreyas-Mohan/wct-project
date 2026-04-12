@@ -9,6 +9,12 @@ We built a machine learning system that uses passive Wi-Fi Channel State Informa
 ## 🏗️ The "Three-Tiered" Smart Router Architecture
 To balance high accuracy with edge-compute power constraints (Green IoT) across different environment sizes, our router uses a 3-tiered scalable architecture:
 
+### 🛠️ Active Room Calibration (ARC) Protocol
+**The "Domain Shift" Problem Solver.** To solve the inherent error of model predictions degrading when testing on different floor plans, this system introduces an automated initialization phase built directly into the codebase (`room_calibration.py`):
+* **Zero-Day Calibration:** The router physically maps static walls ($H_{static}$) and dynamic human scattering ($\Delta CSI$) upon installation.
+* **Few-Shot Transfer Learning:** Uses LightGBM to freeze feature branches and quickly fine-tune final decision trees to the new specific locale on the very edge.
+* **Background Self-Healing (Night Maintenance Daemon):** Automatically monitors variance at off-peak hours (e.g., 3:00 AM) via EMA (Exponential Moving Average) to correct the baseline if users move furniture, ensuring robust, persistent accuracy.
+
 1. **Tier 1: The "Baseline Observer" Profile (Binary Occupancy • IEEE 802.11ax)**
    * **Goal:** Immediate Energy Savings (Green IoT).
    * **How it works:** The router extracts core statistical features from standard 5 GHz Wi-Fi temporal fading to detect basic presence.

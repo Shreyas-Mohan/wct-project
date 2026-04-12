@@ -18,3 +18,8 @@ __pycache__/
 .ipynb_checkpoints/
 Efficient_6-GHz_Wi-Fi-Based_Occupancy_Detection_Channel_Model-Informed_Feature_Engineering_and_Random_Forest_Optimization.pdf
 README_IEEE_DataPort-widar-3.0.pdf
+
+# Demo and Simulation Scripts
+hackathon_demo.py
+setup_wizard_cli.py
+rf_physics_sim.py
